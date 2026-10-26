@@ -6,7 +6,7 @@
 
 ## 开始使用
 
-需要 Node.js **22+**，以及已经运行并连接浏览器的 [Easy WebBridge](https://github.com/huakaikanzhe-web/easy-webbridge) 本机服务与扩展。已有连接直接复用；尚未连接时，沿 Easy WebBridge 当前的安装、连接流程准备。无需给本项目复制网站 Cookie、Token 或重新建立登录。
+需要 Node.js **22+**，以及已经运行并连接浏览器的 [Easy WebBridge](https://github.com/aiispower/easy-webbridge) 本机服务与扩展。已有连接直接复用；尚未连接时，沿 Easy WebBridge 当前的安装、连接流程准备。无需给本项目复制网站 Cookie、Token 或重新建立登录。
 
 普通 Chrome、Edge、QQ 等 Chromium 浏览器按 Bridge 实际连接与能力使用，**EasyBR 多环境是可选项**。CLI 使用 Node.js 标准库，面向 macOS、Windows 和 Linux；具体浏览器、系统与网站可用性以实际连接和验收为准，不宣称所有组合均已实测。
 
