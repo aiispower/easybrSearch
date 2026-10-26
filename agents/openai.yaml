@@ -1,0 +1,4 @@
+interface:
+  display_name: "easybrSearch"
+  short_description: "复用真实浏览器跨平台查找并读取证据，由当前Agent整理带来源的回答"
+  default_prompt: "使用 $easybr-search 严格按我指定的平台范围搜索公开资料，按预算读取关键来源，再给出有出处的回答，说明未读或受限范围。"

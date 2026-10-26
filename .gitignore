@@ -1,0 +1,17 @@
+# Default user configuration: ~/.config/easybr-search/config.json
+# easybrSearch local search material, routing and execution records
+.local/
+**/private-run.json
+**/browser-map*.json
+
+# Dependencies and local development output
+node_modules/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local credentials are never project content
+.env
+.env.*
+!.env.example
