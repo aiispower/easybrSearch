@@ -58,3 +58,9 @@ test('content URL patterns exclude author and navigation pages but retain suppor
     assert.ok(patterns.some(p => p.test(valid)), id + ' valid'); assert.ok(!patterns.some(p => p.test(invalid)), id + ' author');
   }
 });
+
+
+test('Toutiao uses the observed public search host and keeps historical aID content routes', () => {
+  assert.equal(new URL(searchURL('toutiao', 'Manim')).hostname, 'so.toutiao.com');
+  assert.ok(getPlatform('toutiao').contentPatterns.some(p => new RegExp(p).test('https://www.toutiao.com/a1234567890123456789/')));
+});

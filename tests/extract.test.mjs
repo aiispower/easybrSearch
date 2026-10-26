@@ -22,10 +22,10 @@ class Element {
 }
 function compound(node, selector) {
   const tag = selector.match(/^[a-zA-Z][a-zA-Z0-9-]*/)?.[0]; if (tag && node.tagName !== tag.toUpperCase()) return false;
-  for (const m of selector.matchAll(/\.([a-zA-Z0-9_-]+)|#([a-zA-Z0-9_-]+)|\[([^\]=*\s]+)(\*?=)?(?:"([^"]*)"|'([^']*)'|([^\]]*))?\]/g)) {
+  for (const m of selector.matchAll(/\.([a-zA-Z0-9_-]+)|#([a-zA-Z0-9_-]+)|\[([^\]=*^\s]+)([*^]?=)?(?:"([^"]*)"|'([^']*)'|([^\]]*))?\]/g)) {
     if (m[1] && !node.className.split(/\s+/).includes(m[1])) return false;
     if (m[2] && node.id !== m[2]) return false;
-    if (m[3]) { const val = node.getAttribute(m[3]); if (val === null) return false; const wanted = m[5] ?? m[6] ?? m[7] ?? ''; if (m[4] === '=' && val !== wanted) return false; if (m[4] === '*=' && !val.includes(wanted)) return false; }
+    if (m[3]) { const val = node.getAttribute(m[3]); if (val === null) return false; const wanted = m[5] ?? m[6] ?? m[7] ?? ''; if (m[4] === '=' && val !== wanted) return false; if (m[4] === '*=' && !val.includes(wanted)) return false; if (m[4] === '^=' && !val.startsWith(wanted)) return false; }
   }
   return true;
 }
@@ -195,4 +195,127 @@ test('engine-origin Bili detail selects native description while read/opus and u
     const page = evaluate(detail('youtube'), [el('article', {}, '实际页面文字。'.repeat(20))], { url });
     assert.equal(page.contentType, expected);
   }
+});
+
+test('observed Sina K article container is reusable and excludes navigation, sidebars, recommendations and ad blocks', () => {
+  const body = '离线夹具的文章事实与说明。'.repeat(12);
+  const r = evaluate(detail('google'), [el('div', { id: 'article_content', class: 'article-content' }, el('h1', {}, '夹具文章标题'), el('div', { id: 'article', class: 'article' }, el('header', {}, '导航不可进入正文'), el('p', {}, body), el('aside', {}, '侧栏不可进入正文'), el('div', { class: 'recommend-list' }, '推荐不可进入正文'), el('div', { 'data-ad-slot': 'fixture-only' }, '广告不可进入正文'), el('footer', {}, '页尾不可进入正文')), el('div', { class: 'article-content-right' }, '更长的外框信息不属于文章。'.repeat(30)))], { url: 'https://k.sina.com.cn/article_fixture.html', head: [el('meta', { property: 'article:published_time', content: '2026-01-02T03:04:05+08:00' })] });
+  assert.equal(r.text, body); assert.equal(r.publishedAt, '2026-01-02T03:04:05+08:00');
+  assert.deepEqual(r.extraction, { contentSelector: '#article.article', primaryContent: true, textLength: body.length });
+});
+
+test('Sina finance artibody retains a short actual article and reads a date outside the body without using a sidebar date', () => {
+  const body = '这是刻意少于八十字的夹具正文。';
+  const r = evaluate(detail('bing'), [el('aside', {}, el('span', { class: 'date' }, '错误侧栏日期')), el('div', { class: 'article-header' }, el('h1', {}, '短文章'), el('span', { class: 'date' }, '2026-01-02 03:04')), el('div', { id: 'artibody' }, el('p', {}, body)), el('main', {}, '大块模板或周边文字不代替短正文。'.repeat(20))], { url: 'https://finance.sina.com.cn/tech/fixture.shtml' });
+  assert.equal(r.text, body); assert.equal(r.title, '短文章'); assert.equal(r.publishedAt, '2026-01-02 03:04');
+  assert.deepEqual(r.extraction, { contentSelector: '#artibody', primaryContent: true, textLength: body.length });
+});
+
+test('Sina adapter is host-scoped and missing primary content does not promote body into an article', () => {
+  const nodes = [el('div', { id: 'article', class: 'article' }, '不在已适配主机上的同名容器。'.repeat(10))];
+  const r = evaluate(detail('google'), nodes, { url: 'https://finance.sina.com.cn.evil.example/fixture' });
+  assert.equal(r.text, ''); assert.deepEqual(r.extraction, { contentSelector: null, primaryContent: false, textLength: 0 });
+});
+
+test('well-known captcha path on any domain and a visible standalone challenge are blocking, not empty or delayed article content', () => {
+  const url = 'https://news.example/.well-known/captcha?request=fixture-only';
+  const r = evaluate(detail('google'), [el('article', {}, '背景文字不得在验证页面交付。'.repeat(10))], { url, title: '站点' });
+  assert.equal(r.state.captcha, true); assert.equal(r.state.empty, false); assert.equal(r.state.loading, false); assert.equal(r.text, ''); assert.equal(r.extraction.primaryContent, false); assert.equal(r.extraction.textLength, 0);
+  const listing = evaluate(search('bing'), [bingCard('https://example.com/result')], { url });
+  assert.equal(listing.state.captcha, true); assert.deepEqual(listing.items, []);
+  const visible = evaluate(detail('google'), [el('main', {}, 'Please complete the security check to continue.')], { url: 'https://news.example/check', title: '站点' });
+  assert.equal(visible.state.captcha, true); assert.equal(visible.text, '');
+  const hidden = evaluate(detail('google'), [el('article', {}, '可见文章内容。'.repeat(20)), el('div', { style: 'display:none' }, 'Please complete the security check to continue.')], { url: 'https://news.example/article' });
+  assert.equal(hidden.state.captcha, false); assert.equal(hidden.extraction.primaryContent, true);
+});
+
+test('native short video description retains its primary selector and does not become a longer generic article', () => {
+  const description = '可见视频说明，未观看视频。';
+  const r = evaluate(detail('google'), [el('main', {}, '周边模板文字。'.repeat(80), el('div', { id: 'description-inline-expander' }, description))], { url: 'https://www.youtube.com/watch?v=fixture123' });
+  assert.equal(r.contentType, 'video'); assert.equal(r.text, description);
+  assert.deepEqual(r.extraction, { contentSelector: '#description-inline-expander', primaryContent: true, textLength: description.length });
+});
+
+
+test('observed Weibo permalink timestamps use visible post text as the result title without taking author navigation', () => {
+  const r = evaluate(search('weibo'), [el('div', { class: 'card-wrap', 'data-mid': '123' },
+    el('a', { href: 'https://weibo.com/12345678', class: 'name' }, '演示作者'),
+    el('p', { class: 'txt' }, '用 Manim 制作 AI 动画的实际步骤与经验'),
+    el('p', { class: 'from' }, el('a', { href: 'https://weibo.com/12345678/Abcdef123' }, '今天 08:10')))], { url: 'https://s.weibo.com/weibo?q=Manim' });
+  assert.equal(r.items.length, 1); assert.equal(r.items[0].title, '用 Manim 制作 AI 动画的实际步骤与经验');
+  assert.equal(r.items[0].publishedAt, '今天 08:10'); assert.equal(r.items[0].author, '演示作者');
+});
+
+
+test('observed Baidu realtime aggregate heading is navigation while inner titled news and Baijiahao content remain candidates', () => {
+  const wrapper = 'https://www.baidu.com/link?url=fixture-aggregate';
+  const news = 'https://www.baidu.com/link?url=fixture-real-news';
+  const r = evaluate(search('baidu'), [el('div', { class: 'result-op c-container', tpl: 'rel_base_realtime' },
+    el('h3', { class: 'cosc-title' }, el('a', { href: wrapper }, '演示查询的最新相关信息')),
+    el('div', { class: 'weak-content_fixture' }, el('a', { href: news }, el('h3', {}, '实际新闻标题'), el('span', {}, '新闻摘要'))),
+    el('a', { href: 'https://www.baidu.com/link?url=fixture-more' }, '查看更多')),
+    el('div', { class: 'result c-container' }, el('h3', {}, el('a', { href: 'https://baijiahao.baidu.com/s?id=123456789' }, '百家号原文')))], { url: 'https://www.baidu.com/s?wd=demo' });
+  assert.deepEqual(r.items.map(x => x.title), ['实际新闻标题', '百家号原文']);
+  assert.deepEqual(r.items.map(x => x.url), [news, 'https://baijiahao.baidu.com/s?id=123456789']);
+});
+
+test('observed Zhihu no-content wording is empty but X onboarding is a login boundary rather than an unexpected search page', () => {
+  const empty = evaluate(search('zhihu'), [el('main', {}, '未搜索到相关内容，提问快速获得回答')], { url: 'https://www.zhihu.com/search?type=content&q=Manim' });
+  assert.equal(empty.state.empty, true); assert.equal(empty.state.loginRequired, false);
+  const x = evaluate(search('x'), [el('main', {}, '看看正在发生什么 请从下方选择一项 使用手机继续 使用 Google 继续 电子邮箱或用户名 继续', el('input', { name: 'username_or_email' }))], { url: 'https://x.com/i/jf/onboarding/web' });
+  assert.equal(x.state.loginRequired, true); assert.equal(x.state.empty, false); assert.deepEqual(x.items, []);
+});
+
+
+test('actual Zhihu signFlowModal takes priority over background empty wording; hidden login UI does not', () => {
+  const modal = style => el('div', { class: 'Modal signFlowModal', ...(style ? {style} : {}) }, el('form', { class: 'SignFlow Login-content' }, '验证码登录密码登录 登录/注册', el('input', { type: 'tel', name: 'username' })));
+  const options = { url: 'https://www.zhihu.com/search?type=content&q=Manim' };
+  const blocked = evaluate(search('zhihu'), [el('main', {}, '未搜索到相关内容，提问快速获得回答'), modal()], options);
+  assert.equal(blocked.state.loginRequired, true); assert.equal(blocked.state.empty, false); assert.deepEqual(blocked.items, []);
+  const hidden = evaluate(search('zhihu'), [el('main', {}, '未搜索到相关内容，提问快速获得回答'), modal('display:none')], options);
+  assert.equal(hidden.state.loginRequired, false); assert.equal(hidden.state.empty, true);
+});
+
+
+test('observed Toutiao double public jump unwraps native aID articles without treating foreign results, user pages or trending searches as native content', () => {
+  const wrap = target => 'https://sou.toutiao.com/search/jump?url=' + encodeURIComponent(target) + '&aid=24';
+  const article = 'https://www.toutiao.com/a1234567890123456789/';
+  const card = (href, title) => el('div', { class: 'result-content' }, el('div', { class: 'cs-header' }, el('a', { href }, title)));
+  const r = evaluate(search('toutiao'), [card(wrap(wrap(article)).replace('https://sou.', 'https://so.'), 'Manim 实际文章'),
+    card(wrap('https://www.bilibili.com/video/BV123abc456'), '外站视频'), card(wrap('https://www.toutiao.com/c/user/123/'), '作者页'),
+    card(wrap('https://so.toutiao.com/search/?keyword=hot'), '头条热榜'), card(wrap('fixture-opaque'), '不透明参数'), card(wrap('javascript:alert(1)'), '不安全目标')], { url: 'https://so.toutiao.com/search/?keyword=Manim' });
+  assert.deepEqual(r.items.map(x => [x.title,x.url,x.contentType]), [['Manim 实际文章', article, 'article']]);
+});
+
+
+test('observed Toutiao trending article links are excluded while separate native video grid cells remain results', () => {
+  const wrap = target => 'https://sou.toutiao.com/search/jump?url=' + encodeURIComponent(target);
+  const r = evaluate(search('toutiao'), [el('div', { class: 'result-content' },
+    el('div', { class: 'cs-header' }, '头条热榜'), el('a', { href: wrap('https://www.toutiao.com/a1234567890123456789/') }, '不相关热榜')),
+    el('div', { class: 'result-content' },
+      el('div', { class: 'cs-grid-cell' }, el('a', { href: wrap('https://www.toutiao.com/video/1234567890123456789/') }, 'Manim 视频一')),
+      el('div', { class: 'cs-grid-cell' }, el('a', { href: wrap('https://www.toutiao.com/video/2234567890123456789/') }, 'Manim 视频二')))], { url: 'https://so.toutiao.com/search/?dvpf=pc&keyword=Manim' });
+  assert.deepEqual(r.items.map(x => x.title), ['Manim 视频一', 'Manim 视频二']);
+});
+
+
+test('visible Douyin cards without href yield titles-only evidence at the actual search URL, never invented video or modal links', () => {
+  const url = 'https://www.douyin.com/search/Manim?type=general';
+  const card = (id, title, hidden = false) => el('div', { id: 'waterfall_item_' + id }, el('div', { class: 'search-result-card', ...(hidden ? {style:'display:none'} : {}) },
+    el('div', { class: 'BjLsdJMi' }, title), el('div', {}, '@演示作者 · 7月14日'), el('span', {}, '542'), el('span', {}, '01:40')));
+  const r = evaluate(search('douyin', {limit:2}), [el('nav', {}, '不可当正文'), card('1234567890123456789', 'Manim 可视化教程'), card('1234567890123456789', '同卡重复'), card('2234567890123456789', '第二条实际标题'), card('3234567890123456789', '隐藏标题', true)], {url});
+  assert.equal(r.items.length, 2); assert.equal(r.diagnostics.cardCount, 3);
+  assert.deepEqual(r.items.map(x => x.domContentId), ['1234567890123456789','2234567890123456789']);
+  for(const item of r.items){assert.equal(item.url,url);assert.equal(item.linkStatus,'search_page_only');assert.equal(item.contentType,'search-card');assert.ok(!/modal_id|\/video\//.test(item.url));}
+  assert.equal(r.items[0].title,'Manim 可视化教程');assert.equal(r.items[0].author,'演示作者');assert.equal(r.items[0].publishedAt,'7月14日');assert.equal(r.items[0].metrics.raw,'542');
+  assert.equal(r.state.empty,false);
+});
+
+test('Douyin titles-only fallback never supplants a real content href, promotes an invalid DOM id, or bypasses a visible challenge', () => {
+  const textCard = id => el('div', {id}, el('div', {class:'search-result-card'}, el('div', {class:'BjLsdJMi'}, '只有搜索卡片文字')));
+  const options={url:'https://www.douyin.com/search/Manim?type=general'};
+  const real=evaluate(search('douyin'),[textCard('waterfall_item_1234567890123456789'),el('div',{'data-e2e':'search-card'},el('a',{href:'/video/2234567890123456789'},el('span',{'data-e2e':'video-desc'},'真实直链标题')))],options);
+  assert.equal(real.items.length,1);assert.equal(real.items[0].url,'https://www.douyin.com/video/2234567890123456789');assert.equal(real.items[0].linkStatus,undefined);
+  const invalid=evaluate(search('douyin'),[textCard('waterfall_item_unverified')],options);assert.deepEqual(invalid.items,[]);
+  const blocked=evaluate(search('douyin'),[textCard('waterfall_item_1234567890123456789'),el('div',{role:'dialog'},'请完成安全验证')],options);assert.equal(blocked.state.captcha,true);assert.deepEqual(blocked.items,[]);
 });

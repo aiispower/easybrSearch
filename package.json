@@ -1,6 +1,6 @@
 {
   "name": "easybr-search",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Free, local cross-browser search tools and an AI skill for web and social platforms",
   "type": "module",
   "license": "MIT",
@@ -17,7 +17,10 @@
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "search": "node scripts/search.mjs",
-    "check": "node --check scripts/search.mjs"
+    "check": "node --check scripts/search.mjs",
+    "doctor": "node scripts/search.mjs doctor",
+    "benchmark": "node scripts/benchmark.mjs",
+    "platform-check": "node scripts/platform-check.mjs"
   },
   "files": [
     "SKILL.md",
@@ -26,7 +29,9 @@
     "references",
     "README.md",
     "LICENSE",
-    "examples"
+    "examples",
+    "manifest.yaml",
+    "assets/icon-512.png"
   ],
   "repository": {
     "type": "git",
