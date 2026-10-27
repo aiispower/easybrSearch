@@ -6,12 +6,12 @@
 
 适合找教程、对照不同平台的公开说法、查项目资料。搜索不需要购买商业搜索 API，也不另建搜索网站、互联网索引或新 UI。首个正式上线版本为 **1.0.0**；此前 0.x 为开发与试用版本。CLI 不内置 LLM；1.0.0 将搜索与正文读取分别固定为命令，支持先选候选再读、复用已读证据和逐条返回；当前 Agent 负责理解问题、选择互补查询、有限补搜和综合答案。`results.md` 是检索报告，不能直接当作已经完成推理的最终回答。
 
-## 获取 1.0.0
+## 获取
 
-- [GitHub 源码](https://github.com/aiispower/easybrSearch) · [GitHub 下载](https://github.com/aiispower/easybrSearch/releases/tag/v1.0.0)
-- [Gitee 镜像](https://gitee.com/xxjrq/easybrSearch) · [Gitee 下载](https://gitee.com/xxjrq/easybrSearch/releases/tag/v1.0.0)
+- [GitHub 源码](https://github.com/aiispower/easybrSearch) · [GitHub 下载](https://github.com/aiispower/easybrSearch/releases)
+- [Gitee 镜像](https://gitee.com/xxjrq/easybrSearch) · [Gitee 下载](https://gitee.com/xxjrq/easybrSearch/releases)
 
-下载 `easybr-search-1.0.0.zip`，解压得到 `easybr-search/`，放入 Codex 的用户级 `~/.agents/skills/` 即可供所有本机项目调用。保留完整目录；配置与浏览器登录态不包含在下载包中。其他支持本地 Skill 的 AI 工具按各自技能目录安装。
+下载对应版本的 `easybr-search-<版本>.zip`，解压得到 `easybr-search/`，放入 Codex 的用户级 `~/.agents/skills/` 即可供所有本机项目调用。保留完整目录；配置与浏览器登录态不包含在下载包中。其他支持本地 Skill 的 AI 工具按各自技能目录安装。
 
 ## 开始使用
 

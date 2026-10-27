@@ -4,6 +4,7 @@ import {mkdtemp,symlink,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {isCLIEntry} from '../scripts/cli-entry.mjs';
 
@@ -14,7 +15,8 @@ test('global symlink entry points run from an unrelated working directory',async
  const alias=path.join(temp,'easybr-search');
  await symlink(root,alias,process.platform==='win32'?'junction':'dir');
  const run=(script,args)=>execFileSync(process.execPath,[path.join(alias,'scripts',script),...args],{cwd:temp,encoding:'utf8'});
- assert.equal(run('search.mjs',['--version']).trim(),'easybrSearch 1.0.0');
+ const version=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8')).version;
+ assert.equal(run('search.mjs',['--version']).trim(),'easybrSearch '+version);
  for(const script of ['search.mjs','benchmark.mjs','platform-check.mjs']){
   assert.ok(run(script,['--help']).trim().length>40,script+' must execute through its alias');
  }
