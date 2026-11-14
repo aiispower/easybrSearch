@@ -1,0 +1,13 @@
+{
+  "name": "easybr-search",
+  "version": "1.0.3",
+  "description": "Free cross-browser research and source reading. Companion to easyserp search API.",
+  "author": {
+    "name": "aiispower"
+  },
+  "repository": "https://github.com/aiispower/easybrSearch",
+  "license": "MIT",
+  "skills": [
+    "./"
+  ]
+}

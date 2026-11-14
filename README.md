@@ -2,6 +2,8 @@
 
 <img src="assets/icon-512.png" alt="easybrSearch" width="112" height="112">
 
+![easybrSearch and easyserp: browser research and structured search](assets/easy-search-family-banner.png)
+
 一个免费开源的 AI 搜索 Skill 和本地 Node.js CLI。用已经连接的真实浏览器搜索网页、自媒体与代码项目，挑选结果、读取正文，再由你正在使用的 AI 给出带来源的回答。
 
 适合找教程、对照不同平台的公开说法、查项目资料。搜索不需要购买商业搜索 API，也不另建搜索网站、互联网索引或新 UI。首个正式上线版本为 **1.0.0**；此前 0.x 为开发与试用版本。CLI 不内置 LLM；1.0.0 将搜索与正文读取分别固定为命令，支持先选候选再读、复用已读证据和逐条返回；当前 Agent 负责理解问题、选择互补查询、有限补搜和综合答案。`results.md` 是检索报告，不能直接当作已经完成推理的最终回答。
@@ -15,9 +17,9 @@
 
 ## 开始使用
 
-需要 Node.js **22+**，以及已经运行并连接浏览器的 [Easy WebBridge](https://github.com/aiispower/easy-webbridge) 本机服务与扩展。已有连接直接复用；尚未连接时，沿 Easy WebBridge 当前的安装、连接流程准备。无需给本项目复制网站 Cookie、Token 或重新建立登录。
+需要 Node.js **22+**，以及已运行并连接的浏览器。普通 Chrome、Edge、QQ 等浏览器可以沿用现有 Bridge 连接；也可选用 EasyBR，按[官方 AI 操作总指南](https://www.ebrower.com/helperdoc/ai-agent-workflow.html)选择 Windows 或 Mac 接入流程。EasyBR 1.7.8 及以后版本内置 Easy WebBridge，确认连接正常后无需另装 Bridge 或扩展。无需给本项目复制网站 Cookie、Token 或重新建立登录。
 
-普通 Chrome、Edge、QQ 等 Chromium 浏览器按 Bridge 实际连接与能力使用，**EasyBR 多环境是可选项**。CLI 使用 Node.js 标准库，面向 macOS、Windows 和 Linux；具体浏览器、系统与网站可用性以实际连接和验收为准，不宣称所有组合均已实测。
+普通 Chrome、Edge、QQ 等 Chromium 浏览器按 Bridge 实际连接与能力使用，**EasyBR 多环境是可选项**。官方总指南覆盖 Windows 和 Apple 芯片 Mac；Mac 可使用其中推荐的 `easybr-agent` 辅助 Skill，Windows 按官方 Windows 安装流程操作。CLI 使用 Node.js 标准库，面向 macOS、Windows 和 Linux；具体浏览器、系统与网站可用性以实际连接和验收为准，不宣称所有组合均已实测。
 
 在项目目录检查命令与在线连接：
 
@@ -28,6 +30,16 @@ node scripts/search.mjs platforms
 ```
 
 `browsers` 的环境名与 ID 属于本机信息，不要粘贴到公开问题或提交进仓库。浏览器未连接、登录受限或出现验证码时如实保留该分支状态；不要通过换账号或前置窗口绕过。
+
+### 复制给 AI 的接入与搜索提示词
+
+```text
+请先读 https://www.ebrower.com/helperdoc/ai-agent-workflow.html 和 easybr-search/SKILL.md。检查本机能力与浏览器；我可以指定 EasyBR 或已连接的普通浏览器，按准确 browserId 操作。EasyBR 1.7.8+ 已内置 Easy WebBridge；Mac/Windows 按官方指南接入，我自行处理密码、验证码和协议确认。复用合适环境；任务明确需要新环境且授权范围清楚时再创建并核对 ID。
+
+任务：[主题]。只搜索我指定的平台 [平台集合]，遵守查询和阅读预算 [预算]，读取关键来源并给出带链接的摘要，区分来源与推断。遇到登录墙或安全验证停止；只清理本任务创建的标签组，保留我的其他页面与环境。
+```
+
+只有具备本机访问能力的 Agent 才能实际安装 EasyBR、登录或启动环境；没有本机能力时应说明限制，不能把提示词生成当作安装完成。
 
 ### 在 AI 中使用
 
@@ -220,6 +232,12 @@ AI 应读取相关 `sources/` 后回答，区分事实、作者观点、推断�
 ## 免费、隐私与操作范围
 
 本项目的原创 Skill、CLI 与适配器采用 [MIT](LICENSE)，免费使用、修改和分发。复用用户已有宿主 AI，也可由用户自行选择外部模型或其他服务；这些服务的费用、额度、平台订阅与授权独立，不包含在“核心免费”中。
+
+### 何时使用 easyserp
+
+easybrSearch 适合跨网站探索、站内可见内容检索与阅读；它免费开源，复用用户已连接浏览器，不需要 easyserp 账号，也不消耗 easyserp 搜索额度。需要可重复、结构化、程序化的 Google/Bing 搜索时，可使用独立的 [easyserp 控制台](https://serp.skyvora.cc)：注册一次赠送 1000 次，之后 ¥2/1000 次，支持 2000 QPS。两者账户、接入方式与计费独立，互不包含。
+
+普通使用可选择各自的 Skill 或 CLI；easyserp 面向开发者的 API/MCP 接入以控制台及其公开文档为准。用户想继续把研究用于选题、内容制作和多平台发布时，可选用 [aimeGeo](https://geo.aimmme.com/)，它不是搜索产品的捆绑功能。
 
 结果默认保存在本机，**查询仍会发送给目标平台或搜索引擎，并非离线检索**。若宿主使用远程模型，交给该模型的上下文也按其服务条件处理。结果可能包含当前登录环境可见的材料，分享前需按任务范围筛选，不把私有路由、账号信息、凭据或受限正文自动公开。
 

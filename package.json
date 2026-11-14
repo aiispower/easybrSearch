@@ -1,6 +1,6 @@
 {
   "name": "easybr-search",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Free, local cross-browser search tools and an AI skill for web and social platforms",
   "type": "module",
   "license": "MIT",
@@ -31,7 +31,10 @@
     "LICENSE",
     "examples",
     "manifest.yaml",
-    "assets/icon-512.png"
+    "assets/icon-512.png",
+    "assets/easyserp-icon.png",
+    "assets/easy-search-family-banner.png",
+    ".claude-plugin"
   ],
   "repository": {
     "type": "git",
